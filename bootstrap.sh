@@ -75,8 +75,8 @@ backup_if_present() {
   fi
 }
 
-mkdir -p "$install_dir"
 backup_if_present "$install_dir"
+mkdir -p "$install_dir"
 cp "$script_root/themes/catppuccin.omp.json" "$install_dir/catppuccin.omp.json"
 cp "$script_root/zshrc.d/terminal-template.zsh" "$install_dir/terminal-template.zsh"
 

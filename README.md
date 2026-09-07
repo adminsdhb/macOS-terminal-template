@@ -27,7 +27,7 @@ To inspect or customize the files before installing:
 ```sh
 git clone https://github.com/adminsdhb/macOS-terminal-template.git
 cd macOS-terminal-template
-./bootstrap.sh
+bash bootstrap.sh
 ```
 
 ## Customize
