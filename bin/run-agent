@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+print_usage() {
+  cat <<'USAGE'
+Usage:
+  run-agent TOOL TASK...
+  run-agent --help
+
+Routes a task description to an installed agent CLI.
+
+Supported tools:
+  claude   Claude Code in print mode
+  codex    OpenAI Codex in non-interactive mode
+  copilot  GitHub Copilot CLI in prompt mode
+  gemini   Gemini CLI in prompt mode
+  aider    Aider in message mode
+
+Examples:
+  run-agent codex "Review the current branch and summarize risks."
+  run-agent claude "Update the README and run the tests."
+  RUN_AGENT_LOG_FILE=tasks/logs/review.log \
+    run-agent copilot "Inspect the authentication flow."
+
+The wrapper does not install, authenticate, or auto-approve agent tools.
+Install the selected CLI separately, then make sure it is on PATH.
+USAGE
+}
+
+if [[ $# -eq 0 ]]; then
+  print_usage >&2
+  exit 64
+fi
+
+case "$1" in
+  -h|--help)
+    print_usage
+    exit 0
+    ;;
+esac
+
+tool_name="$1"
+shift
+
+if [[ $# -eq 0 ]]; then
+  printf 'Missing task description.\n\n' >&2
+  print_usage >&2
+  exit 64
+fi
+
+task="$*"
+normalized_tool="$(printf '%s' "$tool_name" | tr '[:upper:]' '[:lower:]')"
+agent_command=()
+install_hint='Install the selected agent CLI and make sure it is on PATH.'
+
+case "$normalized_tool" in
+  claude|claude-code)
+    agent_command=(claude -p "$task")
+    install_hint='Install Claude Code, then make sure the "claude" command is on PATH.'
+    ;;
+  codex|openai-codex)
+    agent_command=(codex exec "$task")
+    install_hint='Install OpenAI Codex CLI, then make sure the "codex" command is on PATH.'
+    ;;
+  copilot|github-copilot)
+    agent_command=(copilot -p "$task")
+    install_hint='Install GitHub Copilot CLI, then make sure the "copilot" command is on PATH.'
+    ;;
+  gemini|gemini-cli)
+    agent_command=(gemini -p "$task")
+    install_hint='Install Gemini CLI, then make sure the "gemini" command is on PATH.'
+    ;;
+  aider)
+    agent_command=(aider --message "$task")
+    install_hint='Install Aider, then make sure the "aider" command is on PATH.'
+    ;;
+  *)
+    printf 'Unsupported agent tool: %s\n\n' "$tool_name" >&2
+    print_usage >&2
+    exit 64
+    ;;
+esac
+
+agent_binary="${agent_command[0]}"
+if ! command -v "$agent_binary" >/dev/null 2>&1; then
+  printf 'Agent CLI not found: %s\n' "$agent_binary" >&2
+  printf 'Install hint: %s\n' "$install_hint" >&2
+  exit 127
+fi
+
+printf '[run-agent] tool: %s\n' "$normalized_tool" >&2
+printf '[run-agent] task: %s\n' "$task" >&2
+
+if [[ -n "${RUN_AGENT_LOG_FILE:-}" ]]; then
+  log_file="$RUN_AGENT_LOG_FILE"
+  mkdir -p "$(dirname "$log_file")"
+  {
+    printf 'started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'tool=%s\n' "$normalized_tool"
+    printf 'task=%s\n' "$task"
+    printf '%s\n' 'output:'
+  } >> "$log_file"
+
+  set +e
+  "${agent_command[@]}" 2>&1 | tee -a "$log_file"
+  command_status="${PIPESTATUS[0]}"
+  set -e
+
+  printf 'finished_at=%s\nstatus=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$command_status" >> "$log_file"
+  exit "$command_status"
+fi
+
+exec "${agent_command[@]}"

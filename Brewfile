@@ -1,6 +1,12 @@
 brew "oh-my-posh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
+brew "neovim"
+brew "tmux"
+brew "fzf"
+brew "ripgrep"
+brew "bat"
+brew "lazygit"
 
 cask "ghostty"
 cask "font-meslo-lg-nerd-font"

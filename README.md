@@ -38,3 +38,16 @@ bash bootstrap.sh
 - Re-run `bash bootstrap.sh` after making changes; the installer creates a fresh backup first.
 
 The template targets macOS and assumes zsh, Homebrew, and a normal interactive shell session. It does not install development toolchains such as Xcode, Android Studio, Node, Python, or Rust.
+
+## Agent orchestration
+
+The template includes `bin/run-agent`, a small shared entry point for handing the same task format to different agent CLIs. The bootstrap copies it into `~/.config/macOS-terminal-template/bin` and adds that directory to your shell PATH.
+
+```sh
+./bin/run-agent codex "Review the current branch and summarize risks."
+./bin/run-agent claude "Update the README and run the tests."
+RUN_AGENT_LOG_FILE=tasks/logs/review.log \
+  ./bin/run-agent copilot "Inspect the authentication flow."
+```
+
+Supported tools are `claude`, `codex`, `copilot`, `gemini`, and `aider`. Agent CLIs remain optional: the wrapper prints an install hint and exits cleanly when one is not installed. The bootstrap installs the shared terminal tools only when Homebrew reports they are missing. Use `tasks/README.md` for the input, output, and logging handoff format.

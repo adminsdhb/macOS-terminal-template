@@ -71,7 +71,9 @@ backup_if_present() {
   local source_path="$1"
   if [[ -e "$source_path" ]]; then
     mkdir -p "$backup_root"
-    cp -R "$source_path" "$backup_root/$(basename "$source_path")"
+    if [[ ! -e "$backup_root/$(basename "$source_path")" ]]; then
+      cp -R "$source_path" "$backup_root/$(basename "$source_path")"
+    fi
   fi
 }
 
@@ -79,6 +81,9 @@ backup_if_present "$install_dir"
 mkdir -p "$install_dir"
 cp "$script_root/themes/catppuccin.omp.json" "$install_dir/catppuccin.omp.json"
 cp "$script_root/zshrc.d/terminal-template.zsh" "$install_dir/terminal-template.zsh"
+mkdir -p "$install_dir/bin"
+cp "$script_root/bin/run-agent" "$install_dir/bin/run-agent"
+chmod 755 "$install_dir/bin/run-agent"
 
 mkdir -p "$(dirname "$ghostty_config")"
 backup_if_present "$ghostty_config"
@@ -89,12 +94,25 @@ if ! [[ -f "$zshrc" ]] || ! grep -Fq '# macOS-terminal-template:begin' "$zshrc";
   {
     printf '\n%s\n' '# macOS-terminal-template:begin'
     printf '%s\n' "source \"$install_dir/terminal-template.zsh\""
+    printf '%s\n' '# macOS-terminal-template:agent-path-begin'
+    printf '%s\n' "export PATH=\"$install_dir/bin:\$PATH\""
+    printf '%s\n' '# macOS-terminal-template:agent-path-end'
     printf '%s\n' '# macOS-terminal-template:end'
+  } >> "$zshrc"
+fi
+
+if ! grep -Fq '# macOS-terminal-template:agent-path-begin' "$zshrc"; then
+  backup_if_present "$zshrc"
+  {
+    printf '\n%s\n' '# macOS-terminal-template:agent-path-begin'
+    printf '%s\n' "export PATH=\"$install_dir/bin:\$PATH\""
+    printf '%s\n' '# macOS-terminal-template:agent-path-end'
   } >> "$zshrc"
 fi
 
 printf '%s\n' 'macOS terminal template installed.'
 printf '%s\n' "Restart your terminal or run: source \"$zshrc\""
+printf '%s\n' "Agent wrapper: $install_dir/bin/run-agent"
 if [[ -d "$backup_root" ]]; then
   printf '%s\n' "Backups: $backup_root"
 fi
