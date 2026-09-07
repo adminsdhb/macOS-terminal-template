@@ -35,6 +35,6 @@ bash bootstrap.sh
 - Edit `themes/catppuccin.omp.json` to change the prompt.
 - Edit `ghostty/config` to change the terminal window.
 - Edit `zshrc.d/terminal-template.zsh` to change shell behavior.
-- Re-run `./bootstrap.sh` after making changes; the installer creates a fresh backup first.
+- Re-run `bash bootstrap.sh` after making changes; the installer creates a fresh backup first.
 
 The template targets macOS and assumes zsh, Homebrew, and a normal interactive shell session. It does not install development toolchains such as Xcode, Android Studio, Node, Python, or Rust.
