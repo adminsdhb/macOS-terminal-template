@@ -14,9 +14,9 @@ The installer:
 
 - Installs Homebrew if it is missing.
 - Installs the packages in `Brewfile`.
-- Copies the included Oh My Posh theme and Ghostty settings.
+- Copies the included Oh My Posh theme and installs the Ghostty defaults at `~/.config/ghostty/config`.
 - Adds one guarded source block to `~/.zshrc`.
-- Backs up existing files before changing them.
+- Backs up existing files before changing them and preserves an existing Ghostty config.
 
 Backups are stored under `~/.terminal-template-backups/` with a timestamp. Existing machine-specific setup such as `nvm`, `pyenv`, Android SDK variables, and Java settings is left alone.
 
@@ -33,9 +33,12 @@ bash bootstrap.sh
 ## Customize
 
 - Edit `themes/catppuccin.omp.json` to change the prompt.
-- Edit `ghostty/config` to change the terminal window.
+- Edit `ghostty/config` to change the terminal colors, font, cursor, or window behavior.
 - Edit `zshrc.d/terminal-template.zsh` to change shell behavior.
-- Re-run `bash bootstrap.sh` after making changes; the installer creates a fresh backup first.
+- Re-run `bash bootstrap.sh` after making changes; the installer creates a fresh backup first for managed files.
+- If `~/.config/ghostty/config` already exists, the installer skips it so local Ghostty customizations are not overwritten. Copy your preferred settings into that file manually if you want to adopt newer template defaults.
+
+Ghostty can reload most settings with `Cmd+Shift+,`; restart Ghostty when changing font, opacity, or other settings that require a full restart.
 
 The template targets macOS and assumes zsh, Homebrew, and a normal interactive shell session. It does not install development toolchains such as Xcode, Android Studio, Node, Python, or Rust.
 

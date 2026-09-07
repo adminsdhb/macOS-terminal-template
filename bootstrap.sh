@@ -4,7 +4,7 @@ set -euo pipefail
 readonly repository_slug="${TERMINAL_TEMPLATE_REPO:-adminsdhb/macOS-terminal-template}"
 readonly repository_ref="${TERMINAL_TEMPLATE_REF:-main}"
 readonly install_dir="${TERMINAL_TEMPLATE_CONFIG_DIR:-$HOME/.config/macOS-terminal-template}"
-readonly ghostty_config="$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+readonly ghostty_config="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
 readonly zshrc="$HOME/.zshrc"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -77,6 +77,24 @@ backup_if_present() {
   fi
 }
 
+install_ghostty_config() {
+  local source_path="$1"
+  local target_path="$2"
+
+  if [[ -e "$target_path" || -L "$target_path" ]]; then
+    if [[ -f "$target_path" ]] && cmp -s "$source_path" "$target_path"; then
+      printf '%s\n' "Ghostty config already matches the template: $target_path"
+    else
+      printf '%s\n' "Skipped existing Ghostty config (customization preserved): $target_path"
+    fi
+    return
+  fi
+
+  mkdir -p "$(dirname "$target_path")"
+  cp "$source_path" "$target_path"
+  printf '%s\n' "Installed Ghostty config: $target_path"
+}
+
 backup_if_present "$install_dir"
 mkdir -p "$install_dir"
 cp "$script_root/themes/catppuccin.omp.json" "$install_dir/catppuccin.omp.json"
@@ -85,9 +103,7 @@ mkdir -p "$install_dir/bin"
 cp "$script_root/bin/run-agent" "$install_dir/bin/run-agent"
 chmod 755 "$install_dir/bin/run-agent"
 
-mkdir -p "$(dirname "$ghostty_config")"
-backup_if_present "$ghostty_config"
-cp "$script_root/ghostty/config" "$ghostty_config"
+install_ghostty_config "$script_root/ghostty/config" "$ghostty_config"
 
 if ! [[ -f "$zshrc" ]] || ! grep -Fq '# macOS-terminal-template:begin' "$zshrc"; then
   backup_if_present "$zshrc"
